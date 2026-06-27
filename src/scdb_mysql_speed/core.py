@@ -213,7 +213,10 @@ class SCDBMySQLSpeed:
                     conn.commit()
                     return affected
                 except Exception:
-                    conn.rollback()
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass  # 连接已断开，rollback 不可能成功
                     raise
                 finally:
                     cursor.close()
@@ -250,7 +253,10 @@ class SCDBMySQLSpeed:
                     conn.commit()
                     return affected
                 except Exception:
-                    conn.rollback()
+                    try:
+                        conn.rollback()
+                    except Exception:
+                        pass  # 连接已断开，rollback 不可能成功
                     raise
                 finally:
                     cursor.close()
@@ -288,10 +294,10 @@ class SCDBMySQLSpeed:
                 except Exception as e:
                     try:
                         conn.rollback()
-                    except MySQLdb.Error as rb_err:
-                        raise SCDBTransactionError(
-                            f"事务回滚失败: {rb_err}"
-                        ) from e
+                    except Exception:
+                        # 连接已断开，rollback 不可能成功，
+                        # 让原始异常继续传播
+                        pass
                     raise
                 finally:
                     cursor.close()
