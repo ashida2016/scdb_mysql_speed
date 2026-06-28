@@ -1,11 +1,12 @@
 """scdb_mysql_speed 自定义异常层次结构。
 
-所有异常均继承自 SCDBError，便于统一捕获：
+所有异常均继承自 SCDBError，便于统一捕获。
 
-    try:
-        db.execute(...)
-    except SCDBError as e:
-        ...
+Example:
+    >>> try:
+    ...     db.execute(...)
+    ... except SCDBError as e:
+    ...     print(e)
 """
 
 

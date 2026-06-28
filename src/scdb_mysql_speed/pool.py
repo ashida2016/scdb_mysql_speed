@@ -4,10 +4,10 @@
 使用 ``threading.Semaphore`` 控制最大并发连接总数。
 
 特性：
-- 连接健康检查（``ping()``）
-- 连接过期回收（``pool_recycle``）
-- 上下文管理器自动归还连接
-- 延迟创建（首次获取时才建立连接）
+    - 连接健康检查（``ping()``）
+    - 连接过期回收（``pool_recycle``）
+    - 上下文管理器自动归还连接
+    - 延迟创建（首次获取时才建立连接）
 """
 
 from __future__ import annotations
@@ -47,13 +47,12 @@ class ConnectionPool:
     Args:
         meta: 数据库连接配置。
 
-    示例::
-
-        pool = ConnectionPool(meta)
-        with pool.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1")
-        pool.close_all()
+    Example:
+        >>> pool = ConnectionPool(meta)
+        >>> with pool.get_connection() as conn:
+        ...     cursor = conn.cursor()
+        ...     cursor.execute("SELECT 1")
+        >>> pool.close_all()
     """
 
     def __init__(self, meta: SCDBMySQLMeta) -> None:
@@ -122,7 +121,8 @@ class ConnectionPool:
     def close_all(self) -> None:
         """关闭连接池中的所有连接。
 
-        调用后，池不可再使用。
+        Note:
+            调用后，池不可再使用。
         """
         with self._lock:
             self._closed = True
@@ -144,7 +144,14 @@ class ConnectionPool:
     # ─── 内部方法 ────────────────────────────────────────────────
 
     def _create_connection(self) -> _PooledConnection:
-        """创建新的数据库连接。"""
+        """创建新的数据库连接。
+
+        Returns:
+            包装后的池化连接对象。
+
+        Raises:
+            SCDBConnectionError: 创建数据库连接失败。
+        """
         try:
             conn = MySQLdb.connect(**self._connect_kwargs)
             return _PooledConnection(conn)
@@ -152,7 +159,11 @@ class ConnectionPool:
             raise SCDBConnectionError(f"创建数据库连接失败: {e}") from e
 
     def _acquire(self) -> Connection:
-        """从空闲队列获取一个健康连接，或创建新连接。"""
+        """从空闲队列获取一个健康连接，或创建新连接。
+
+        Returns:
+            可用的 MySQLdb 连接对象。
+        """
         while True:
             try:
                 pc = self._idle.get_nowait()
@@ -174,23 +185,45 @@ class ConnectionPool:
             self._safe_close(pc.connection)
 
     def _release(self, conn: Connection) -> None:
-        """将连接归还到空闲队列。"""
+        """将连接归还到空闲队列。
+
+        Args:
+            conn: 要归还的连接对象。
+        """
         if self._closed:
             self._safe_close(conn)
             return
         self._idle.put_nowait(_PooledConnection(conn))
 
     def _discard(self, conn: Connection) -> None:
-        """丢弃一个连接（不归还池中）。"""
+        """丢弃一个连接（不归还池中）。
+
+        Args:
+            conn: 要丢弃的连接对象。
+        """
         self._safe_close(conn)
 
     def _is_expired(self, pc: _PooledConnection) -> bool:
-        """检查连接是否已超过最大存活时间。"""
+        """检查连接是否已超过最大存活时间。
+
+        Args:
+            pc: 池化连接包装对象。
+
+        Returns:
+            如果连接已过期则返回 True。
+        """
         return (time.monotonic() - pc.created_at) > self._pool_recycle
 
     @staticmethod
     def _is_alive(conn: Connection) -> bool:
-        """通过 ping() 检测连接是否存活。"""
+        """通过 ping() 检测连接是否存活。
+
+        Args:
+            conn: 要检测的连接对象。
+
+        Returns:
+            如果连接存活则返回 True。
+        """
         try:
             conn.ping()
             return True
@@ -199,7 +232,11 @@ class ConnectionPool:
 
     @staticmethod
     def _safe_close(conn: Connection) -> None:
-        """安全关闭连接，忽略异常。"""
+        """安全关闭连接，忽略异常。
+
+        Args:
+            conn: 要关闭的连接对象。
+        """
         try:
             conn.close()
         except Exception:

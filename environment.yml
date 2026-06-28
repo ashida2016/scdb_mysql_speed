@@ -1,0 +1,12 @@
+name: scdb_mysql_speed
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python>=3.10
+  - mysqlclient>=2.2.0
+  # 可选：DataFrame 支持
+  # - pandas>=2.0.0
+  - pip
+  - pip:
+      - -e ".[dev]"

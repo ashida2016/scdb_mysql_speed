@@ -131,6 +131,7 @@ class SCDBMySQLSpeed:
 
         try:
             with self._pool.get_connection() as conn:
+                conn.autocommit(True)
                 cursor = conn.cursor(cursor_class)
                 try:
                     cursor.execute(sql, params)

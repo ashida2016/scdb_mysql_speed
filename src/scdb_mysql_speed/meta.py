@@ -2,15 +2,14 @@
 
 使用 frozen=True 保证不可变性，slots=True 减少内存开销。
 
-示例::
-
-    meta = SCDBMySQLMeta(
-        host="127.0.0.1",
-        port=3306,
-        user="root",
-        password="secret",
-        database="mydb",
-    )
+Example:
+    >>> meta = SCDBMySQLMeta(
+    ...     host="127.0.0.1",
+    ...     port=3306,
+    ...     user="root",
+    ...     password="secret",
+    ...     database="mydb",
+    ... )
 """
 
 from __future__ import annotations

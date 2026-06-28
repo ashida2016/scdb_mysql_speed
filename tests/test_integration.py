@@ -29,8 +29,6 @@ TEST_META = SCDBMySQLMeta(
     user="test5001",
     password="Love2026",
     database="test_5001",
-    pool_size=2,
-    pool_max_overflow=3,
 )
 
 
@@ -48,9 +46,11 @@ def db():
 @pytest.fixture(autouse=True)
 def clean_table(db):
     """每个测试前后清空测试表。"""
-    db.execute("TRUNCATE TABLE t_test5001")
+    # db.execute("TRUNCATE TABLE t_test5001")
+    db.execute("DELETE FROM t_test5001")
     yield
-    db.execute("TRUNCATE TABLE t_test5001")
+    # db.execute("TRUNCATE TABLE t_test5001")
+    db.execute("DELETE FROM t_test5001")
 
 
 # ─── 连接测试 ────────────────────────────────────────────────────
@@ -96,7 +96,7 @@ class TestInsert:
             ("Bob",),
             result_type="tuple",
         )
-        # assert len(rows) == 1
+        assert len(rows) == 1
         assert rows[0][0] == "Bob"
 
     def test_batch_insert(self, db) -> None:
