@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scdb_mysql_speed"
-version = "0.3.1"
+version = "0.4.0"
 description = "高性能、工业级的 MySQL 数据库操作 Python 包"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -21,10 +21,14 @@ dependencies = [
 dataframe = [
     "pandas>=2.0.0",
 ]
+yaml = [
+    "PyYAML>=6.0",
+]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
     "pandas>=2.0.0",
+    "PyYAML>=6.0",
 ]
 
 [tool.setuptools.packages.find]

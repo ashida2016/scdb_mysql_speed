@@ -1,6 +1,9 @@
 """SCDBMySQLSpeed 主类的单元测试（使用 mock）。"""
 
+import csv
+import io
 import json
+import xml.etree.ElementTree as ET
 from unittest.mock import MagicMock, patch, call
 from contextlib import contextmanager
 
@@ -129,6 +132,65 @@ class TestFetchAll:
         assert list(result.columns) == ["id", "name"]
         assert len(result) == 2
 
+    def test_xml_format(self) -> None:
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchall.return_value = [
+            {"id": 1, "name": "alice"},
+            {"id": 2, "name": "bob"},
+        ]
+        mock_cursor.description = (("id", None), ("name", None))
+        mock_conn.cursor.return_value = mock_cursor
+
+        db = _create_db_with_mock_pool(mock_conn)
+        result = db.fetch_all("SELECT * FROM users", result_format="xml")
+
+        assert isinstance(result, str)
+        root = ET.fromstring(result)
+        assert root.tag == "results"
+        rows = root.findall("row")
+        assert len(rows) == 2
+        assert rows[0].find("name").text == "alice"
+        assert rows[1].find("id").text == "2"
+
+    def test_yaml_format(self) -> None:
+        yaml = pytest.importorskip("yaml")
+
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchall.return_value = [
+            {"id": 1, "name": "alice"},
+        ]
+        mock_cursor.description = (("id", None), ("name", None))
+        mock_conn.cursor.return_value = mock_cursor
+
+        db = _create_db_with_mock_pool(mock_conn)
+        result = db.fetch_all("SELECT * FROM users", result_format="yaml")
+
+        assert isinstance(result, str)
+        parsed = yaml.safe_load(result)
+        assert parsed == [{"id": 1, "name": "alice"}]
+
+    def test_csv_format(self) -> None:
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchall.return_value = [
+            {"id": 1, "name": "alice"},
+            {"id": 2, "name": "bob"},
+        ]
+        mock_cursor.description = (("id", None), ("name", None))
+        mock_conn.cursor.return_value = mock_cursor
+
+        db = _create_db_with_mock_pool(mock_conn)
+        result = db.fetch_all("SELECT * FROM users", result_format="csv")
+
+        assert isinstance(result, str)
+        reader = csv.DictReader(io.StringIO(result))
+        rows = list(reader)
+        assert len(rows) == 2
+        assert rows[0]["name"] == "alice"
+        assert rows[1]["id"] == "2"
+
     def test_with_params(self) -> None:
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
@@ -152,7 +214,7 @@ class TestFetchAll:
 
         db = _create_db_with_mock_pool(mock_conn)
         with pytest.raises(ValueError, match="不支持"):
-            db.fetch_all("SELECT 1", result_format="xml")  # type: ignore[arg-type]
+            db.fetch_all("SELECT 1", result_format="html")  # type: ignore[arg-type]
 
     def test_empty_result(self) -> None:
         mock_conn = MagicMock()

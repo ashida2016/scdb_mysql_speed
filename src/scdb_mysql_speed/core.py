@@ -30,8 +30,11 @@
 
 from __future__ import annotations
 
+import csv
+import io
 import json
 import logging
+import xml.etree.ElementTree as ET
 from contextlib import contextmanager
 from typing import Any, Generator, Literal
 
@@ -49,7 +52,7 @@ from .pool import ConnectionPool
 logger = logging.getLogger(__name__)
 
 # 支持的返回格式类型
-ResultFormat = Literal["tuple", "df", "json", "dict"]
+ResultFormat = Literal["tuple", "df", "json", "dict", "xml", "yaml", "csv"]
 
 
 class SCDBMySQLSpeed:
@@ -113,7 +116,8 @@ class SCDBMySQLSpeed:
             sql: SQL 查询语句。
             params: 查询参数，用于参数化查询。
             result_format: 返回结果格式，支持
-                ``"tuple"``（默认）、``"dict"``、``"df"``、``"json"``。
+                ``"tuple"``（默认）、``"dict"``、``"df"``、``"json"``、
+                ``"xml"``、``"yaml"``、``"csv"``。
 
         Returns:
             根据 *result_format* 返回对应格式的查询结果：
@@ -122,12 +126,20 @@ class SCDBMySQLSpeed:
             - ``"dict"``: ``list[dict[str, Any]]``
             - ``"df"``: ``pandas.DataFrame``
             - ``"json"``: JSON 字符串
+            - ``"xml"``: XML 字符串
+            - ``"yaml"``: YAML 字符串
+            - ``"csv"``: CSV 字符串
 
         Raises:
             SCDBQueryError: SQL 执行失败。
-            ImportError: 使用 ``"df"`` 但未安装 ``pandas``。
+            ImportError: 使用 ``"df"`` 但未安装 ``pandas``，或使用
+                ``"yaml"`` 但未安装 ``PyYAML``。
         """
-        cursor_class = DictCursor if result_format in ("dict", "json", "df") else Cursor
+        cursor_class = (
+            DictCursor
+            if result_format in ("dict", "json", "df", "xml", "yaml", "csv")
+            else Cursor
+        )
 
         try:
             with self._pool.get_connection() as conn:
@@ -336,6 +348,44 @@ class SCDBMySQLSpeed:
             # 使用 DictCursor 返回的 dict 列表直接构造
             dict_rows = list(rows) if not isinstance(rows, list) else rows
             return pd.DataFrame(dict_rows, columns=columns if columns else None)
+
+        if result_format == "xml":
+            dict_rows = list(rows) if not isinstance(rows, list) else rows
+            root = ET.Element("results")
+            for row in dict_rows:
+                row_elem = ET.SubElement(root, "row")
+                for key, value in row.items():
+                    col_elem = ET.SubElement(row_elem, str(key))
+                    col_elem.text = str(value) if value is not None else ""
+            return ET.tostring(root, encoding="unicode", xml_declaration=True)
+
+        if result_format == "yaml":
+            try:
+                import yaml
+            except ImportError:
+                raise ImportError(
+                    "使用 result_format='yaml' 需要安装 PyYAML。"
+                    "请执行: pip install scdb_mysql_speed[yaml]"
+                )
+            dict_rows = list(rows) if not isinstance(rows, list) else rows
+            return yaml.dump(
+                dict_rows, allow_unicode=True, default_flow_style=False,
+            )
+
+        if result_format == "csv":
+            dict_rows = list(rows) if not isinstance(rows, list) else rows
+            if not dict_rows:
+                # 无数据时仅输出列头（若有）
+                buf = io.StringIO()
+                writer = csv.writer(buf)
+                if columns:
+                    writer.writerow(columns)
+                return buf.getvalue()
+            buf = io.StringIO()
+            writer = csv.DictWriter(buf, fieldnames=columns or list(dict_rows[0].keys()))
+            writer.writeheader()
+            writer.writerows(dict_rows)
+            return buf.getvalue()
 
         raise ValueError(f"不支持的 result_format: {result_format!r}")
 

@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.abspath('../../src'))
 project = 'scdb_mysql_speed'
 copyright = '2026, Ashida.Shi'
 author = 'Ashida.Shi'
-release = '0.3.1'
+release = '0.4.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
