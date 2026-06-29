@@ -1,0 +1,3 @@
+# Sphinx 文档构建依赖（Read the Docs 使用）
+sphinx>=7.0
+furo
