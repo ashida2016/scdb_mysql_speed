@@ -74,7 +74,7 @@ class TestFetchAll:
         mock_conn.cursor.return_value = mock_cursor
 
         db = _create_db_with_mock_pool(mock_conn)
-        result = db.fetch_all("SELECT * FROM users", result_type="tuple")
+        result = db.fetch_all("SELECT * FROM users", result_format="tuple")
 
         assert result == ((1, "alice"), (2, "bob"))
         mock_cursor.execute.assert_called_once_with("SELECT * FROM users", None)
@@ -90,7 +90,7 @@ class TestFetchAll:
         mock_conn.cursor.return_value = mock_cursor
 
         db = _create_db_with_mock_pool(mock_conn)
-        result = db.fetch_all("SELECT * FROM users", result_type="dict")
+        result = db.fetch_all("SELECT * FROM users", result_format="dict")
 
         assert result == [{"id": 1, "name": "alice"}, {"id": 2, "name": "bob"}]
 
@@ -104,7 +104,7 @@ class TestFetchAll:
         mock_conn.cursor.return_value = mock_cursor
 
         db = _create_db_with_mock_pool(mock_conn)
-        result = db.fetch_all("SELECT * FROM users", result_type="json")
+        result = db.fetch_all("SELECT * FROM users", result_format="json")
 
         parsed = json.loads(result)
         assert parsed == [{"id": 1, "name": "alice"}]
@@ -123,7 +123,7 @@ class TestFetchAll:
         mock_conn.cursor.return_value = mock_cursor
 
         db = _create_db_with_mock_pool(mock_conn)
-        result = db.fetch_all("SELECT * FROM users", result_type="dataframe")
+        result = db.fetch_all("SELECT * FROM users", result_format="df")
 
         assert isinstance(result, pd.DataFrame)
         assert list(result.columns) == ["id", "name"]
@@ -143,7 +143,7 @@ class TestFetchAll:
             "SELECT * FROM users WHERE id=%s", (1,)
         )
 
-    def test_invalid_result_type_raises(self) -> None:
+    def test_invalid_result_format_raises(self) -> None:
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cursor.fetchall.return_value = ()
@@ -152,7 +152,7 @@ class TestFetchAll:
 
         db = _create_db_with_mock_pool(mock_conn)
         with pytest.raises(ValueError, match="不支持"):
-            db.fetch_all("SELECT 1", result_type="xml")  # type: ignore[arg-type]
+            db.fetch_all("SELECT 1", result_format="xml")  # type: ignore[arg-type]
 
     def test_empty_result(self) -> None:
         mock_conn = MagicMock()
@@ -224,7 +224,7 @@ class TestFetchPage:
         with pytest.raises(ValueError, match="page_size 必须"):
             db.fetch_page("SELECT 1", page_size=0)
 
-    def test_page_with_result_type(self) -> None:
+    def test_page_with_result_format(self) -> None:
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_cursor.fetchall.return_value = [{"id": 1}]
@@ -233,7 +233,7 @@ class TestFetchPage:
 
         db = _create_db_with_mock_pool(mock_conn)
         result = db.fetch_page(
-            "SELECT * FROM users", page=1, page_size=5, result_type="dict"
+            "SELECT * FROM users", page=1, page_size=5, result_format="dict"
         )
         assert result == [{"id": 1}]
 

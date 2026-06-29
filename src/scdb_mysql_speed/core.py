@@ -13,8 +13,8 @@
     assert db.test_connection()
 
     # 查询
-    rows = db.fetch_all("SELECT * FROM users", result_type="dict")
-    page = db.fetch_page("SELECT * FROM users", page=2, page_size=10, result_type="dataframe")
+    rows = db.fetch_all("SELECT * FROM users", result_format="dict")
+    page = db.fetch_page("SELECT * FROM users", page=2, page_size=10, result_format="df")
 
     # 增删改（自动事务）
     db.execute("INSERT INTO users (name) VALUES (%s)", ("Alice",))
@@ -49,7 +49,7 @@ from .pool import ConnectionPool
 logger = logging.getLogger(__name__)
 
 # 支持的返回格式类型
-ResultType = Literal["tuple", "dataframe", "json", "dict"]
+ResultFormat = Literal["tuple", "df", "json", "dict"]
 
 
 class SCDBMySQLSpeed:
@@ -105,29 +105,29 @@ class SCDBMySQLSpeed:
         self,
         sql: str,
         params: tuple | list | dict | None = None,
-        result_type: ResultType = "tuple",
+        result_format: ResultFormat = "tuple",
     ) -> Any:
         """执行查询并一次性返回所有结果。
 
         Args:
             sql: SQL 查询语句。
             params: 查询参数，用于参数化查询。
-            result_type: 返回结果格式，支持
-                ``"tuple"``（默认）、``"dict"``、``"dataframe"``、``"json"``。
+            result_format: 返回结果格式，支持
+                ``"tuple"``（默认）、``"dict"``、``"df"``、``"json"``。
 
         Returns:
-            根据 *result_type* 返回对应格式的查询结果：
+            根据 *result_format* 返回对应格式的查询结果：
 
             - ``"tuple"``: ``tuple[tuple[Any, ...], ...]``
             - ``"dict"``: ``list[dict[str, Any]]``
-            - ``"dataframe"``: ``pandas.DataFrame``
+            - ``"df"``: ``pandas.DataFrame``
             - ``"json"``: JSON 字符串
 
         Raises:
             SCDBQueryError: SQL 执行失败。
-            ImportError: 使用 ``"dataframe"`` 但未安装 ``pandas``。
+            ImportError: 使用 ``"df"`` 但未安装 ``pandas``。
         """
-        cursor_class = DictCursor if result_type in ("dict", "json", "dataframe") else Cursor
+        cursor_class = DictCursor if result_format in ("dict", "json", "df") else Cursor
 
         try:
             with self._pool.get_connection() as conn:
@@ -146,7 +146,7 @@ class SCDBMySQLSpeed:
         except MySQLdb.Error as e:
             raise SCDBQueryError(f"查询执行失败: {e}") from e
 
-        return self._convert_result(rows, columns, result_type)
+        return self._convert_result(rows, columns, result_format)
 
     def fetch_page(
         self,
@@ -154,7 +154,7 @@ class SCDBMySQLSpeed:
         params: tuple | list | dict | None = None,
         page: int = 1,
         page_size: int = 100,
-        result_type: ResultType = "tuple",
+        result_format: ResultFormat = "tuple",
     ) -> Any:
         """执行查询并返回指定页的结果（分页读取）。
 
@@ -166,10 +166,10 @@ class SCDBMySQLSpeed:
             params: 查询参数。
             page: 页码，从 1 开始，默认 1。
             page_size: 每页行数，默认 100。
-            result_type: 返回结果格式，同 :meth:`fetch_all`。
+            result_format: 返回结果格式，同 :meth:`fetch_all`。
 
         Returns:
-            指定页的查询结果，格式由 *result_type* 决定。
+            指定页的查询结果，格式由 *result_format* 决定。
 
         Raises:
             ValueError: 页码或每页行数不合法。
@@ -183,7 +183,7 @@ class SCDBMySQLSpeed:
         offset = (page - 1) * page_size
         paged_sql = f"{sql.rstrip().rstrip(';')} LIMIT {offset}, {page_size}"
 
-        return self.fetch_all(paged_sql, params, result_type)
+        return self.fetch_all(paged_sql, params, result_format)
 
     # ─── 增删改（带事务）─────────────────────────────────────────
 
@@ -311,33 +311,33 @@ class SCDBMySQLSpeed:
     def _convert_result(
         rows: Any,
         columns: list[str],
-        result_type: ResultType,
+        result_format: ResultFormat,
     ) -> Any:
         """将原始查询结果转换为指定格式。"""
-        if result_type == "tuple":
+        if result_format == "tuple":
             return rows
 
-        if result_type == "dict":
+        if result_format == "dict":
             # DictCursor 已返回 list[dict]
             return list(rows) if not isinstance(rows, list) else rows
 
-        if result_type == "json":
+        if result_format == "json":
             dict_rows = list(rows) if not isinstance(rows, list) else rows
             return json.dumps(dict_rows, ensure_ascii=False, default=str)
 
-        if result_type == "dataframe":
+        if result_format == "df":
             try:
                 import pandas as pd
             except ImportError:
                 raise ImportError(
-                    "使用 result_type='dataframe' 需要安装 pandas。"
+                    "使用 result_format='df' 需要安装 pandas。"
                     "请执行: pip install scdb_mysql_speed[dataframe]"
                 )
             # 使用 DictCursor 返回的 dict 列表直接构造
             dict_rows = list(rows) if not isinstance(rows, list) else rows
             return pd.DataFrame(dict_rows, columns=columns if columns else None)
 
-        raise ValueError(f"不支持的 result_type: {result_type!r}")
+        raise ValueError(f"不支持的 result_format: {result_format!r}")
 
     def __repr__(self) -> str:
         return (

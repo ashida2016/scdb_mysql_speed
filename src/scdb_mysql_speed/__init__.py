@@ -9,7 +9,7 @@
     meta = SCDBMySQLMeta(host="127.0.0.1", user="root", password="pw", database="mydb")
     db = SCDBMySQLSpeed(meta)
     db.test_connection()
-    rows = db.fetch_all("SELECT * FROM users", result_type="dict")
+    rows = db.fetch_all("SELECT * FROM users", result_format="dict")
     db.close()
 """
 

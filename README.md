@@ -54,15 +54,15 @@ rows = db.fetch_all("SELECT * FROM users")
 # ((1, 'alice'), (2, 'bob'))
 
 # dict 格式
-rows = db.fetch_all("SELECT * FROM users", result_type="dict")
+rows = db.fetch_all("SELECT * FROM users", result_format="dict")
 # [{'id': 1, 'name': 'alice'}, {'id': 2, 'name': 'bob'}]
 
 # JSON 格式
-data = db.fetch_all("SELECT * FROM users", result_type="json")
+data = db.fetch_all("SELECT * FROM users", result_format="json")
 # '[{"id": 1, "name": "alice"}, ...]'
 
 # DataFrame 格式（需安装 pandas）
-df = db.fetch_all("SELECT * FROM users", result_type="dataframe")
+df = db.fetch_all("SELECT * FROM users", result_format="df")
 #    id   name
 # 0   1  alice
 # 1   2    bob
@@ -78,7 +78,7 @@ page1 = db.fetch_page("SELECT * FROM users", page=1, page_size=10)
 page3 = db.fetch_page(
     "SELECT * FROM users",
     page=3, page_size=10,
-    result_type="dict",
+    result_format="dict",
 )
 ```
 

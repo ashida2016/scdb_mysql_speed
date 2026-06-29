@@ -94,7 +94,7 @@ class TestInsert:
         rows = db.fetch_all(
             "SELECT name FROM t_test5001 WHERE name = %s",
             ("Bob",),
-            result_type="tuple",
+            result_format="tuple",
         )
         assert len(rows) == 1
         assert rows[0][0] == "Bob"
@@ -133,7 +133,7 @@ class TestSelect:
     def test_fetch_all_tuple(self, db) -> None:
         rows = db.fetch_all(
             "SELECT id, name FROM t_test5001 ORDER BY id",
-            result_type="tuple",
+            result_format="tuple",
         )
         assert len(rows) == 3
         assert isinstance(rows, tuple)
@@ -142,7 +142,7 @@ class TestSelect:
     def test_fetch_all_dict(self, db) -> None:
         rows = db.fetch_all(
             "SELECT id, name FROM t_test5001 ORDER BY id",
-            result_type="dict",
+            result_format="dict",
         )
         assert len(rows) == 3
         assert isinstance(rows, list)
@@ -153,7 +153,7 @@ class TestSelect:
     def test_fetch_all_json(self, db) -> None:
         result = db.fetch_all(
             "SELECT id, name FROM t_test5001 ORDER BY id",
-            result_type="json",
+            result_format="json",
         )
         assert isinstance(result, str)
         parsed = json.loads(result)
@@ -164,7 +164,7 @@ class TestSelect:
         pd = pytest.importorskip("pandas")
         df = db.fetch_all(
             "SELECT id, name FROM t_test5001 ORDER BY id",
-            result_type="dataframe",
+            result_format="df",
         )
         assert isinstance(df, pd.DataFrame)
         assert list(df.columns) == ["id", "name"]
@@ -175,7 +175,7 @@ class TestSelect:
         rows = db.fetch_all(
             "SELECT name FROM t_test5001 WHERE name LIKE %s",
             ("%li%",),
-            result_type="dict",
+            result_format="dict",
         )
         names = {r["name"] for r in rows}
         assert "Alice" in names
@@ -215,7 +215,7 @@ class TestFetchPage:
         rows = db.fetch_page(
             "SELECT name FROM t_test5001 ORDER BY id",
             page=2, page_size=3,
-            result_type="dict",
+            result_format="dict",
         )
         assert len(rows) == 3
         # 第 2 页应为 User_04, User_05, User_06
@@ -247,7 +247,7 @@ class TestFetchPage:
         df = db.fetch_page(
             "SELECT id, name FROM t_test5001 ORDER BY id",
             page=1, page_size=5,
-            result_type="dataframe",
+            result_format="df",
         )
         assert isinstance(df, pd.DataFrame)
         assert len(df) == 5
@@ -353,7 +353,7 @@ class TestTransaction:
             )
 
         rows = db.fetch_all(
-            "SELECT name FROM t_test5001", result_type="dict"
+            "SELECT name FROM t_test5001", result_format="dict"
         )
         assert len(rows) == 1
         assert rows[0]["name"] == "Modified"
@@ -381,13 +381,13 @@ class TestEdgeCases:
         rows = db.fetch_all(
             "SELECT name FROM t_test5001 WHERE name = %s",
             ("测试用户",),
-            result_type="dict",
+            result_format="dict",
         )
         assert rows[0]["name"] == "测试用户"
 
     def test_empty_string_data(self, db) -> None:
         db.execute("INSERT INTO t_test5001 (name) VALUES (%s)", ("",))
-        rows = db.fetch_all("SELECT name FROM t_test5001", result_type="dict")
+        rows = db.fetch_all("SELECT name FROM t_test5001", result_format="dict")
         assert rows[0]["name"] == ""
 
     def test_special_characters(self, db) -> None:
@@ -399,7 +399,7 @@ class TestEdgeCases:
         rows = db.fetch_all(
             "SELECT name FROM t_test5001 WHERE name = %s",
             (name,),
-            result_type="dict",
+            result_format="dict",
         )
         assert rows[0]["name"] == name
 
