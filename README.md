@@ -45,9 +45,9 @@ assert db.test_connection()
 ```
 
 ## 帮助文档
-[百度](https://www.baidu.com)
--- [latest](https://scdb-mysql-speed.readthedocs.io/zh-cn/latest/)
-   -- [ver0.3.1](https://scdb-mysql-speed.readthedocs.io/zh-cn/ver0.3.1/)
+
+[latest](https://scdb-mysql-speed.readthedocs.io/zh-cn/latest/)
+[ver0.3.1](https://scdb-mysql-speed.readthedocs.io/zh-cn/ver0.3.1/)
 
 
 ## 查询操作
