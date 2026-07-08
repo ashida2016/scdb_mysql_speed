@@ -6,7 +6,7 @@
 
 - 🚀 **高性能** — 基于 `mysqlclient`（C 扩展驱动），速度最快
 - 🏊 **连接池化** — 自研线程安全连接池，支持健康检查与自动回收
-- 📦 **多格式返回** — 查询结果支持 tuple / dict / DataFrame / JSON
+- 📦 **多格式返回** — 查询结果支持 tuple / dict / DataFrame / JSON / XML / YAML / CSV
 - 📄 **分页查询** — 内置分页读取与全量读取两种方式
 - 🔄 **事务支持** — 增删改操作自动事务，也支持手动事务上下文
 - ⚡ **批量操作** — 原生 `executemany` 批量插入/更新
@@ -21,6 +21,12 @@ pip install -e .
 
 ```bash
 pip install -e ".[dataframe]"
+```
+
+如需 YAML 格式支持：
+
+```bash
+pip install -e ".[yaml]"
 ```
 
 ## 快速上手
@@ -46,7 +52,6 @@ assert db.test_connection()
 
 ## 帮助文档
 
-[_latest_](https://scdb-mysql-speed.readthedocs.io/zh-cn/latest/)  
 [ver0.4.0](https://scdb-mysql-speed.readthedocs.io/zh-cn/ver0.4.0/)  
 [ver0.3.1](https://scdb-mysql-speed.readthedocs.io/zh-cn/ver0.3.1/)  
 
@@ -72,6 +77,21 @@ df = db.fetch_all("SELECT * FROM users", result_format="df")
 #    id   name
 # 0   1  alice
 # 1   2    bob
+
+# XML 格式
+xml_str = db.fetch_all("SELECT * FROM users", result_format="xml")
+# '<?xml version="1.0" ?>\n<results><row><id>1</id><name>alice</name></row>...'
+
+# YAML 格式（需安装 PyYAML）
+yaml_str = db.fetch_all("SELECT * FROM users", result_format="yaml")
+# - id: 1
+#   name: alice
+# - id: 2
+#   name: bob
+
+# CSV 格式
+csv_str = db.fetch_all("SELECT * FROM users", result_format="csv")
+# 'id,name\r\n1,alice\r\n2,bob\r\n'
 ```
 
 ### 分页查询
