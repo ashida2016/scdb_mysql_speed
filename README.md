@@ -52,6 +52,7 @@ assert db.test_connection()
 
 ## 帮助文档
 
+[ver0.5.0](https://scdb-mysql-speed.readthedocs.io/zh-cn/ver0.5.0/)  
 [ver0.4.0](https://scdb-mysql-speed.readthedocs.io/zh-cn/ver0.4.0/)  
 [ver0.3.1](https://scdb-mysql-speed.readthedocs.io/zh-cn/ver0.3.1/)  
 
