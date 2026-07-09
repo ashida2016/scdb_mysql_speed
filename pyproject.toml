@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scdb_mysql_speed"
-version = "0.4.0"
+version = "0.5.1"
 description = "高性能、工业级的 MySQL 数据库操作 Python 包"
 readme = "README.md"
 requires-python = ">=3.12"
